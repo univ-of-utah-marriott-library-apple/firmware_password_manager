@@ -85,12 +85,12 @@ fi
 
 #
 # email alert recipients
+# add addresses as appropriate
 #
 mailto=""
 
 #
 # additional details for email alerts
-# en0 works on our machines, MBA's will
 #
 rundate=$(/bin/date)
 runhost=$(/usr/sbin/system_profiler SPNetworkDataType | grep -m1 "IPv4 Addresses" | /usr/bin/cut -d":" -f2 | /usr/bin/cut -d" " -f2)
