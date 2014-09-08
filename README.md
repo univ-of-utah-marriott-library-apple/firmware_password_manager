@@ -12,7 +12,7 @@ Here is the keyfile format:
 ```
 #							    <-- Lines beginning with hashmarks, "comments" are ignored.
 # date of change 			    <-- useful for recording dates, previous hashes, etc.
-current:currentpasswword 	    <-- the assumed current password.
+current:currentpassword 	    <-- the assumed current password.
 new:newpassword 			    <-- the new password to be installed.
 ```
 
