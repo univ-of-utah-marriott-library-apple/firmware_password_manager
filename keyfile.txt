@@ -1,3 +1,0 @@
-# last changed: 080812
-current:currentPasswd
-new:everything0ld1sNewAgain
