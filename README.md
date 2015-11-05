@@ -70,13 +70,7 @@ firmware_password_manager.py [-hv] [-#rmn] [-k keyfile] [-t] [-s]
 `-t`, `--testmode` | More verbose logging, will not delete keyfile.
 `-s`, `--slack` | Sends important messages to Slack.
 
-Certain flags are mutually exclusive. The script will refuse to run if more than one of the following flags are used.
-
-exclusive flags:
-`-remove`
-`-management`
-`-hash`
-`-nostring`
+Certain flags are mutually exclusive. The script will refuse to run if more than one of the following flags are used: `-remove` `-management` `-hash` `-nostring`
 
 ### The keyfile
 
@@ -88,7 +82,7 @@ Here is the keyfile format:
 ```
 note:previouspassword <-- other notes are ignored.
 #new:currentpassword  <-- hash marks can be used to signal older passwords.
-`new`:newpassword     <-- the new password to be installed.
+new:newpassword     <-- the new password to be installed.
 ```
 
 Here's an example keyfile:
