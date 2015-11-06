@@ -106,10 +106,10 @@ def send_slack_message(message, alert_level, local_identifier):
     message serverity.
     """
 
-    slack_error_url     = 'https://hooks.slack.com/services/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'
-    slack_error_channel = '#fwpw_manager_errors'
-    slack_info_url      = 'https://hooks.slack.com/services/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'
-    slack_info_channel  = '#fwpw_manager_info'
+    slack_error_url     = 'https://hooks.slack.com/services/your_error_channel'
+    slack_error_channel = '#your_errors'
+    slack_info_url      = 'https://hooks.slack.com/services/your_info_channel'
+    slack_info_channel  = '#your_info'
 
     if alert_level is 'success':
         emoji         = ":white_check_mark:"
