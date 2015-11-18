@@ -20,6 +20,7 @@ A Python script to help Macintosh administrators manage the firmware passwords o
   * [firmwarepasswd](#firmwarepasswd)
   * [Error messages](#common-error-messages)
 * [Notes](#notes)
+* [Update History](#update-history)
 
 ## Contact
 
@@ -188,3 +189,11 @@ If you have an earlier machine, it's much easier:
 6. Restart and the firmware password should be removed.
 
 Thank you to macmule for <http://macmule.com/2014/05/11/ea-check-efi-password-state/>, which helped me get things working in version 1.
+
+## Update History
+
+Date | Version | Notes
+-------|-----------|-------
+2015.11.05 | 2.0.0 | Python rewrite, Docs rewritten
+2015.02.25 | 1.0.1 | Use firmwarepasswd on 10.10
+2014.08.20 | 1.0.0 | Initial version.
