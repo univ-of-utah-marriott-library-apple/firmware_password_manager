@@ -4,6 +4,7 @@ A Python script to help Macintosh administrators manage the firmware passwords o
 
 ## Contents
 
+* [Download](#download) - get the .dmg
 * [Contact](#contact)
 * [System Requirements](#system-requirements)
 * [Install](#install)
@@ -21,6 +22,10 @@ A Python script to help Macintosh administrators manage the firmware passwords o
   * [Error messages](#common-error-messages)
 * [Notes](#notes)
 * [Update History](#update-history)
+
+## Download
+
+[Download the latest installer here!](../../releases/)
 
 ## Contact
 
