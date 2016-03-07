@@ -217,7 +217,7 @@ Thank you to macmule for <http://macmule.com/2014/05/11/ea-check-efi-password-st
 
 Date | Version | Notes
 -------|-----------|-------
-2016.03.xx | 2.1.0 | Obfuscation, reboot flag, bug fixes
+2016.03.07 | 2.1.0 | Obfuscation, reboot flag, bug fixes
 2015.11.05 | 2.0.0 | Python rewrite, Docs rewritten
 2015.02.25 | 1.0.1 | Added use of firmwarepasswd on 10.10
 2014.08.20 | 1.0.0 | Initial version.
