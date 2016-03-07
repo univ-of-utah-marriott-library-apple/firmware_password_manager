@@ -125,7 +125,7 @@ Please see Slack's documentation for additional configuration options: https://a
 
 This image shows example messages in Slack:
 
-![ScreenShot](img\slack_example.png)
+![ScreenShot](img/slack_example.png)
 
 ### JAMF JSS extention attribute
 
@@ -135,15 +135,15 @@ The EA script runs during recon and pushes the hash up to the JSS. We then defin
 
 The following image shows the EA page in the JSS:
 
-![ScreenShot](img\jss_ea.png)
+![ScreenShot](img/jss_ea.png)
 
 This image shows the two possible smart group built using the EA:
 
-![ScreenShot](img\jss_smart_group.png)
+![ScreenShot](img/jss_smart_group.png)
 
 Here is how the smart groups are built:
 
-![ScreenShot](img\jss_not_current.png)
+![ScreenShot](img/jss_not_current.png)
 
 ### nvram string
 
