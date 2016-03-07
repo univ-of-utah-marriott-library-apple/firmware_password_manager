@@ -1,4 +1,4 @@
-# Firmware Password Manager 2.0
+# Firmware Password Manager 2.1
 
 A Python script to help Macintosh administrators manage the firmware passwords of their computers.
 
@@ -20,6 +20,7 @@ A Python script to help Macintosh administrators manage the firmware passwords o
   * [nvram](#nvram)
   * [firmwarepasswd](#firmwarepasswd)
   * [Error messages](#common-error-messages)
+* [New features in version 2.1](#new)
 * [Notes](#notes)
 * [Update History](#update-history)
 
@@ -49,7 +50,7 @@ Remove the script.
 
 Version 2.0 represents a complete rewrite of Firmware Password Manager (FWPM). The previous version, a shell script, always felt brittle to me. The new version is written in Python. I also focused on utilizing `firmwarepasswd`, rather than the outdated `setregproptool`.
 
-When I began this project there wasn't a solution available for managing firmware passwords, other than the "set-it-and-forget-it" method. This approach seems error-prone and difficult to maintain beyond more than a small handful of machines. My solution centers on maintaining a single list of current and formerly used passwords. This approach allows the administrator to easily bring any number of machines up to the current password, and identify those whose firmware passwords aren't in the master list and need additional maintenance.
+When I began this project there wasn't a solution available for managing firmware passwords, other than the "set-it-and-forget-it" method. This approach seems error-prone and difficult to maintain beyond more than a small handful of machines. My solution centers on maintaining a single list of current and formerly used passwords that I call the keyfile. This approach allows the administrator to easily bring any number of machines up to the current password, and identify those whose firmware passwords aren't in the master list and need additional maintenance.
 
 `firmware_password_manager.py` will use your keyfile to set a firmware password on a machine with no existing firmware password, attempt to change the existing firmware password to your new password or remove the current password. The script is best used when it can be installed and left on the machine for future use. This allows the admin to then create an installer package containing the keyfile and a postflight action to run FWPM. Or the admin could create a launchagent to run FWPM at every boot
 
@@ -75,6 +76,8 @@ firmware_password_manager.py [-hv] [-#rmn] [-k keyfile] [-t] [-s]
 `-k`, `--keyfile` | Provide the path to the keyfile.
 `-t`, `--testmode` | More verbose logging, will not delete keyfile.
 `-s`, `--slack` | Sends important messages to Slack.
+`-o`, `--obfuscate` | Accepts a plist containing the obfuscated keyfile.
+`-b`, `--reboot` | Reboots the computer after the script completes successfully.
 
 Certain flags are mutually exclusive. The script will refuse to run if more than one of the following flags are used: `-remove` `-management` `-hash` `-nostring`
 
@@ -82,14 +85,17 @@ Certain flags are mutually exclusive. The script will refuse to run if more than
 
 The script works with a text document I call the keyfile. It contains the new password, as well as any previously used passwords. Having previously used passwords available allows the script to update machines that may have been missed during previous runs of the script.
 
-The script requires a specific format for the keyfile. Each lines contains the following: a note string, a colon, and a password string. No additional colons. I assume the newest passwords will be at the end of the file, and the script will try those first. Only the `new` note has a special meaning, other are ignored.
+The script requires a specific format for the keyfile. Each lines contains the following: a note string, a colon, and a password string. No additional colons. I assume the newest passwords will be at the end of the file, and the script will try those first. Only the `new` note has a special meaning, others are ignored.
 
 Here is the keyfile format:
-```
-note:previouspassword <-- other notes are ignored.
-#new:currentpassword  <-- hash marks can be used to signal older passwords.
-new:newpassword     <-- the new password to be installed.
-```
+
+Notes | Purpose
+--------|---------
+new|the new password to be installed.
+note|any other note strings are ignored.
+#new|a hash mark will cause the note to be ignored.
+
+
 
 Here's an example keyfile:
 ```
@@ -113,24 +119,13 @@ This command will place a hash in nvram, slack informational messages and use th
 
 ### Slack integration
 
-We make heavy use of Slack in our office. The `--slack` flag directs FWPM to send informational messages to a slack team. FWPM can be easily modified to fit your team. We created a free team to use as a short-term logging service. Setting up the Incoming Webhooks Integration allows you to curl JSON messages to the Slack server from FWPM. Out of the box, FWPM assumes two channels: one for errors and the other for success reports.
-
-FWPM uses four variables to allow interaction with Slack:
-
-variable|useage
-----------|--------
-`slack_error_url`|The URL to the error channel
-`slack_error_channel`| The name of the error channel
-`slack_info_url`| The URL to the info channel
-`slack_info_channel`| The name of the info channel
-
-You can combine the output into a single channel, setting both the error and info groups to the same channel
+We make heavy use of Slack in our office. The `--slack` flag directs FWPM to send informational messages to a slack team. I have integrated the slack functionality of our management_tools library into FWPM. You simply need to add the URL and channel information for your Slack group to the script.
 
 Please see Slack's documentation for additional configuration options: https://api.slack.com/incoming-webhooks
 
 This image shows example messages in Slack:
 
-![ScreenShot](slack_example.png)
+![ScreenShot](\img\slack_example.png)
 
 ### JAMF JSS extention attribute
 
@@ -140,15 +135,15 @@ The EA script runs during recon and pushes the hash up to the JSS. We then defin
 
 The following image shows the EA page in the JSS:
 
-![ScreenShot](jss_ea.png)
+![ScreenShot](\img\jss_ea.png)
 
 This image shows the two possible smart group built using the EA:
 
-![ScreenShot](jss_smart_group.png)
+![ScreenShot](\img\jss_smart_group.png)
 
 Here is how the smart groups are built:
 
-![ScreenShot](jss_not_current.png)
+![ScreenShot](\img\jss_not_current.png)
 
 ### nvram string
 
@@ -176,6 +171,29 @@ Current FW password not in keyfile.| This is an critical message that the keyfil
 nvram reported error.|This is a catchall error stating that nvram encountered an error.
 An error occured. Failed to modify firmware password.|This means one of the above errors likely occured. Keep reading the log to find the exact error.
 
+## New Features in version 2.1
+
+Version 2.1 adds an important new security feature. I've included a new tool: `obfuscate_keylist.py`.
+
+```
+obfuscate_keylist.py -s original_keylist.txt -d obfuscated_keylist.plist
+```
+Flag|Purpose
+-------|-----------
+-s, --source|path to source keyfile
+-d, --desination|path to save obfuscated keyfile
+-t, --testmode|verbose output
+-v, --version|show program's version number and exit
+-h, --help|show help message and exit
+
+This tool takes your original keyfile and outputs a base64-encoded property list. It's important to note that obfuscation is not technically encryption. The flag for FWPM to use this form of plist is `-o, --obfuscate`
+
+I've also added a reboot flag `-b, --reboot`. If this flag is selected and the script finishes successfully, it will force a reboot.
+
+Also new to this release is a sample script (`remotely_set_firmpwarepassword_scp_keylist.py`) showing how to remotely execute FWPM and securely copy (`scp`) your keyfile over the network. A shell script version is included for use in Apple's Remote Desktop.
+
+
+
 ## Notes
 If you have forgotten the firmware password for a machine your available options depend upon the age of the machine.
 
@@ -199,6 +217,7 @@ Thank you to macmule for <http://macmule.com/2014/05/11/ea-check-efi-password-st
 
 Date | Version | Notes
 -------|-----------|-------
+2016.03.xx | 2.1.0 | Obfuscation, reboot flag, bug fixes
 2015.11.05 | 2.0.0 | Python rewrite, Docs rewritten
-2015.02.25 | 1.0.1 | Use firmwarepasswd on 10.10
+2015.02.25 | 1.0.1 | Added use of firmwarepasswd on 10.10
 2014.08.20 | 1.0.0 | Initial version.
