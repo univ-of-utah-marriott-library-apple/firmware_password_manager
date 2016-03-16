@@ -70,7 +70,7 @@ firmware_password_manager.py [-hv] [-#rmn] [-k keyfile] [-t] [-s]
 `-h`, `--help` | Prints help information and quits.
 `-v`, `--version` | Prints version information and quits.
 `-r`, `--remove` | Remove the current firmware password.
-`-m`, `--management` | Define managment string in nvram.
+`-m`, `--management` | Define management string in nvram.
 `-#`, `--hash` | Record hash of keyfile in nvram entry. FWPW 1.0 behavior. Default choice.
 `-n`, `--nostring` | Do not set management string.
 `-k`, `--keyfile` | Provide the path to the keyfile.
@@ -161,7 +161,7 @@ Here is how the smart groups are built:
 
 To make the most of FWPM, we suggest using the `--hash` flag to store the hash of the keyfile used to create the current firmware password. This allows you to use a variety of tools to remotely check the status of the firmware password on a machine. Using this flag the script will create an SHA-2 hash of the new keyfile and store it in non-volitile RAM (nvram) when the password is changed. The hash can then be accessed locally through the terminal or remotely with SSH, ARD or other tool.
 
-The `--managment` allows you to define any string to place in nvram. You could record the date the password was changed last or a cryptic hint to help you remember the password in the future (not recommended).
+The `--management` allows you to define any string to place in nvram. You could record the date the password was changed last or a cryptic hint to help you remember the password in the future (not recommended).
 
 ### firmwarepasswd
 
