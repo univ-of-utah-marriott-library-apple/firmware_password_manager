@@ -58,7 +58,7 @@ When I began this project there wasn't a solution available for managing firmwar
 ## Usage
 
 ```
-firmware_password_manager.py [-hv] [-#rmn] [-k keyfile] [-t] [-s]
+firmware_password_manager.py [-h -v] [-# -r -m -n] [-k /path/to/keyfile -o] [-s -i]  [-t]
 ```
 
 

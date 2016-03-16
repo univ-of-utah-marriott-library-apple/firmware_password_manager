@@ -29,7 +29,7 @@
 #    2.1.1  2016.03.16      slack identifier customization,
 #                           logic clarifications. tjm
 #
-#    2.1.2  2016.03.16      cleanup argparse, remove obsolete flag logic. tjm
+#    2.1.2  2016.03.16      cleaned up argparse, remove obsolete flag logic. tjm
 #
 #
 # keyfile format:
