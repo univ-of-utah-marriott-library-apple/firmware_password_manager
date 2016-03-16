@@ -29,7 +29,7 @@
 #    2.1.1  2016.03.16      slack identifier customization,
 #                           logic clarifications. tjm
 #
-#
+#    2.1.2  2016.03.16      cleanup argparse, remove obsolete flag logic. tjm
 #
 #
 # keyfile format:
@@ -125,18 +125,45 @@ def main():
 
     #
     # parse option definitions
-    parser = argparse.ArgumentParser(description='Manages the firmware password on Apple Computers.')
-    parser.add_argument('-r', '--remove', action="store_true", default=False, help='Remove firmware password')
-    parser.add_argument('-k', '--keyfile', help='Set path to keyfile', required=True)
-    parser.add_argument('-t', '--testmode', action="store_true", default=False, help='Test mode. Verbose logging, will not delete keyfile.')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s 2.1.0')
-    parser.add_argument('-m', '--management', default=None, help='Set nvram management string')
-    parser.add_argument('-#', '--hash', action="store_true", default=False, help='Set nvram string to hash of keyfile')
-    parser.add_argument('-n', '--nostring', action="store_true", default=False, help='Do not set nvram management string')
-    parser.add_argument('-s', '--slack', action="store_true", default=False, help='Send important messages to Slack.')
-    parser.add_argument('-o', '--obfuscated', action="store_true", default=False, help='Accepts a plist containing the obfuscated keyfile.')
-    parser.add_argument('-b', '--reboot', action="store_true", default=False, help='Reboots the computer after the script completes successfully.')
-    parser.add_argument('-i', '--identifier', default=None, required=False, help='Set slack identifier. [IP, hostname, MAC, computername, serial]')
+    parser = argparse.ArgumentParser(
+        description='Manages the firmware password on Apple Computers.')
+
+    prime_group = parser.add_argument_group('Required management settings',
+        'Choosing one of these options is required to run FWPM. They tell FWPM how you \
+        want to manage the firmware password.')
+    subprime = prime_group.add_mutually_exclusive_group(required=True)
+    subprime.add_argument('-r', '--remove', action="store_true",
+        default=False, help='Remove the firmware password')
+    subprime.add_argument('-m', '--management', default=None,
+        help='Set a custom nvram management string')
+    subprime.add_argument('-#', '--hash', action="store_true", default=False,
+        help='Set nvram string to hash of keyfile')
+    subprime.add_argument('-n', '--nostring', action="store_true", default=False,
+        help='Do not set an nvram management string')
+
+    keyfile_group = parser.add_argument_group('Keyfile options', 'The keyfile is \
+        required to use FWPM. These options allow you to set the location and \
+        format of the keyfile.')
+    keyfile_group.add_argument('-k', '--keyfile', help='Set the path to your keyfile',
+         required=True)
+    keyfile_group.add_argument('-o', '--obfuscated', action="store_true", default=False,
+        help='Tell FWPM your keylist is an obfuscated plist.')
+
+    slack_group = parser.add_argument_group('Slack integration',
+        'FWPM allows you to send informational and error messages to your Slack team. \
+        Additionally you can select different methods of identifiying clients.')
+    slack_group.add_argument('-s', '--slack', action="store_true",
+        default=False, help='Send important messages to Slack.')
+    slack_group.add_argument('-i', '--identifier', default=None,
+        choices=['IP', 'hostname', 'MAC', 'computername', 'serial'],
+            required=False, help='Set slack identifier.')
+
+    parser.add_argument('-b', '--reboot', action="store_true", default=False,
+        help='Reboots the computer after the script completes successfully.')
+    parser.add_argument('-t', '--testmode', action="store_true", default=False,
+        help='Test mode. Verbose logging, will not delete keyfile.')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s 2.1.2')
+
     args = parser.parse_args()
 
     if args.testmode:

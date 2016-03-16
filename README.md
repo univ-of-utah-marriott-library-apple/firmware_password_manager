@@ -1,4 +1,4 @@
-# Firmware Password Manager 2.1.1
+# Firmware Password Manager 2.1.2
 
 A Python script to help Macintosh administrators manage the firmware passwords of their computers.
 
@@ -229,7 +229,8 @@ Thank you to macmule for <http://macmule.com/2014/05/11/ea-check-efi-password-st
 
 Date | Version | Notes
 -------|-----------|-------
-2016.03.xx | 2.1.1 | Slack identifier flag, logic clarifications.
+2016.03.16 | 2.1.2 | Cleaned up argparse, removed obsolete flag logic.
+2016.03.16 | 2.1.1 | Slack identifier flag, logic clarifications.
 2016.03.07 | 2.1.0 | Obfuscation, reboot flag, bug fixes
 2015.11.05 | 2.0.0 | Python rewrite, Docs rewritten
 2015.02.25 | 1.0.1 | Added use of firmwarepasswd on 10.10
