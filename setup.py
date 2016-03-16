@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='Firmware Password Manager',
-    version='2.1.0',
+    version='2.1.1',
     url='https://github.com/univ-of-utah-marriott-library-apple/firmware_password_manager',
     author='Todd McDaniel, Marriott Library IT Services',
     author_email='mlib-its-mac-github@lists.utah.edu',

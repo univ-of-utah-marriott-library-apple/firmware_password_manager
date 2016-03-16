@@ -1,4 +1,4 @@
-# Firmware Password Manager 2.1
+# Firmware Password Manager 2.1.1
 
 A Python script to help Macintosh administrators manage the firmware passwords of their computers.
 
@@ -78,6 +78,7 @@ firmware_password_manager.py [-hv] [-#rmn] [-k keyfile] [-t] [-s]
 `-s`, `--slack` | Sends important messages to Slack.
 `-o`, `--obfuscate` | Accepts a plist containing the obfuscated keyfile.
 `-b`, `--reboot` | Reboots the computer after the script completes successfully.
+`-i`, `--identifier` | Set slack identifier. `IP`, `MAC`, `computername`, `hostname`, `serial`
 
 Certain flags are mutually exclusive. The script will refuse to run if more than one of the following flags are used: `-remove` `-management` `-hash` `-nostring`
 
@@ -119,13 +120,24 @@ This command will place a hash in nvram, slack informational messages and use th
 
 ### Slack integration
 
-We make heavy use of Slack in our office. The `--slack` flag directs FWPM to send informational messages to a slack team. I have integrated the slack functionality of our management_tools library into FWPM. You simply need to add the URL and channel information for your Slack group to the script.
+We make heavy use of Slack in our office. The `-s` `--slack` flag directs FWPM to send informational messages to a slack team. I have integrated the slack functionality of our management_tools library into FWPM. You simply need to add the URL and channel information for your Slack group to the script.
 
 Please see Slack's documentation for additional configuration options: https://api.slack.com/incoming-webhooks
 
 This image shows example messages in Slack:
 
 ![ScreenShot](img/slack_example.png)
+
+Version 2.1.1 adds additional configuration options for Slack. The `-i` `--identifer` flag allows you to select how machines are identified in Slack messages. This feature request was issue #2. These flags are mutually exclusive.
+
+String|Purpose
+-------|-----------
+IP|The IP address of the machine is used. Previous default.
+MAC|The MAC address of the current device is used.
+computername|The computername is used.
+hostname|The fully qualified domain name is used.
+serial|The machines serial number is used. If an error occurs discovering the previous methods, FWPM will fall back to this method.
+
 
 ### JAMF JSS extention attribute
 
@@ -217,6 +229,7 @@ Thank you to macmule for <http://macmule.com/2014/05/11/ea-check-efi-password-st
 
 Date | Version | Notes
 -------|-----------|-------
+2016.03.xx | 2.1.1 | Slack identifier flag, logic clarifications.
 2016.03.07 | 2.1.0 | Obfuscation, reboot flag, bug fixes
 2015.11.05 | 2.0.0 | Python rewrite, Docs rewritten
 2015.02.25 | 1.0.1 | Added use of firmwarepasswd on 10.10
