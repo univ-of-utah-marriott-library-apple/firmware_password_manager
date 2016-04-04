@@ -53,9 +53,9 @@ Remove the script.
 ### Why set the Firmware Password?
 In a nutshell, the firmware password in Apple computers prevents non-privileged users from booting from a foreign device.
 
-The firmware password is one leg of interlocking methods used to secure Apple computers. The other two are: using strong passwords on user accounts and File Vault to apply full disk encryption (FDE). Strong account passwords are always the first line of defense. FDE effectively scrambles the information written a storage device and renders it unreadable by unauthorized persons. Using all three methods can make a computer unusable should it be lost or stolen.
+The firmware password is one leg of interlocking methods used to secure Apple computers. The other two are: using strong passwords on user accounts and FileVault to apply full disk encryption (FDE). Strong account passwords are always the first line of defense. FDE effectively scrambles the information written a storage device and renders it unreadable by unauthorized persons. Using all three methods can make a computer unusable should it be lost or stolen.
 
-Depending on the model of computer, removing the firmware password can be easy or incredibly difficult, please refer to the Notes section for more information about removing the password.
+Depending on the model of computer, removing the firmware password can be easy or incredibly difficult, please refer to the [Notes](#notes) section for more information about removing the password.
 
 ### Firmware Password Manager
 When I began this project there wasn't a solution available for actively managing firmware passwords, other than the "set-it-and-forget-it" method. This approach seems error-prone and difficult to maintain beyond more than a small handful of machines. My solution centers on maintaining a single list of current and formerly used passwords that I call the keyfile. This approach allows the administrator to easily bring any number of machines up to the current password, and identify those whose firmware passwords aren't in the master list and need additional maintenance.
