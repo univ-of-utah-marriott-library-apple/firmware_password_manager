@@ -29,7 +29,9 @@
 #    2.1.1  2016.03.16      slack identifier customization,
 #                           logic clarifications. tjm
 #
-#    2.1.2  2016.03.16      cleaned up argparse, remove obsolete flag logic. tjm
+#    2.1.2  2016.03.16      cleaned up argparse. tjm
+#
+#    2.1.3  2016.04.04      remove obsolete flag logic. tjm
 #
 #
 # keyfile format:
@@ -127,7 +129,8 @@ def main():
     # parse option definitions
     parser = argparse.ArgumentParser(
         description='Manages the firmware password on Apple Computers.')
-
+    #
+    # required, mutually exclusive commands
     prime_group = parser.add_argument_group('Required management settings',
         'Choosing one of these options is required to run FWPM. They tell FWPM how you \
         want to manage the firmware password.')
@@ -162,7 +165,7 @@ def main():
         help='Reboots the computer after the script completes successfully.')
     parser.add_argument('-t', '--testmode', action="store_true", default=False,
         help='Test mode. Verbose logging, will not delete keyfile.')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s 2.1.2')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s 2.1.3')
 
     args = parser.parse_args()
 
@@ -173,31 +176,6 @@ def main():
     # Open log file
     logger = loggers.file_logger(name='FWPW_Manager2')
     logger.info("Running Firmware Password Manager 2")
-
-    #
-    # test flags for conflicts
-    if args.management is not None and (args.hash or args.nostring or args.remove):
-        conflicting_flags = True
-    elif args.hash and (args.nostring or args.remove):
-        conflicting_flags = True
-    elif args.nostring and args.remove:
-        conflicting_flags = True
-    else:
-        conflicting_flags = False
-
-    if conflicting_flags:
-        logger.info("Remove, Hash, Management and \'No string\' flags are mutually exclusive. Select one. Exiting.")
-        secure_delete_keyfile(logger, args)
-        exit(2)
-    else:
-        logger.info("Flags okay.")
-
-    #
-    # check for no flags set.
-    if args.management is None and not args.hash and not args.nostring and not args.remove:
-        logger.critical("A specific flag is required: Remove, Hash, Management and \'No string\'. Select one. Exiting.")
-        secure_delete_keyfile(logger, args)
-        exit(2)
 
     #
     # set up slack channel(s)
@@ -216,7 +194,7 @@ def main():
         if args.testmode:
             print "Serial number: %r" % serial_number
 
-        if args.identifier == 'IP' or args.identifier == 'ip' or args.identifier == 'MAC' or args.identifier == 'mac' or  args.identifier == 'hostname':
+        if args.identifier == 'IP' or args.identifier == 'MAC' or args.identifier == 'hostname':
             processed_device_list = []
 
             # Get ordered list of network devices
@@ -228,21 +206,23 @@ def main():
                 try:
                     device_info_raw = subprocess.check_output(["/sbin/ifconfig", port_name])
                     mac_address = re.findall('ether (.*) \n', device_info_raw)
-                    print "%r" % mac_address
+                    if args.testmode:
+                        print "%r" % mac_address
                     ether_address = re.findall('inet (.*) netmask', device_info_raw)
-                    print "%r" % ether_address
+                    if args.testmode:
+                        print "%r" % ether_address
                     processed_device_list.append([ device_name, port_name, ether_address[0], mac_address[0] ])
                 except:
                     pass
 
             if len(processed_device_list) > 0:
-                logger.info("Multiple active IP addresses. Choosing primary.")
+                logger.info("1 or more active IP addresses. Choosing primary.")
                 if args.testmode:
                     print processed_device_list
-                if args.identifier == 'IP' or args.identifier == 'ip':
+                if args.identifier == 'IP':
                     local_identifier = processed_device_list[0][2] + " (" + processed_device_list[0][0] + ":" + processed_device_list[0][1] + ")"
 
-                if args.identifier == 'MAC' or args.identifier == 'mac':
+                if args.identifier == 'MAC':
                     local_identifier = processed_device_list[0][3]  + " (" + processed_device_list[0][0] + ":" + processed_device_list[0][1] + ")"
 
                 if args.identifier == 'hostname':
@@ -467,7 +447,7 @@ def main():
                 error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Malformed keyfile.")
             exit(1)
 
-    exit_Normal = False
+    exit_normal = False
     known_current_password = False
 
     #
@@ -517,7 +497,7 @@ def main():
                     #
                     # password accepted, log result and exit
                     logger.info("Finished. Password should be removed. Restart required. [%i]" % (index + 1))
-                    exit_Normal = True
+                    exit_normal = True
                 else:
                     logger.critical("Asked to delete, current password not accepted. Exiting.")
                     secure_delete_keyfile(logger, args)
@@ -529,7 +509,7 @@ def main():
             # Current and new password are identical
             elif current_password == new_password:
                 logger.info("Match, no change required. Exiting.")
-                exit_Normal = True
+                exit_normal = True
 
             #
             # Change current firmware password to new password
@@ -578,7 +558,7 @@ def main():
                 child.close()
 
                 logger.info("Updated FW Password.")
-                exit_Normal = True
+                exit_normal = True
 
         #
         # Unable to match current password with contents of keyfile
@@ -624,7 +604,7 @@ def main():
         child.close()
 
         logger.info("Added FW Password.")
-        exit_Normal = True
+        exit_normal = True
 
     #
     # Delete keyfile securely.
@@ -638,7 +618,7 @@ def main():
     #
     # No errors detected during run.
     # nvram modifications, reporting, and exits
-    if exit_Normal:
+    if exit_normal:
         if args.remove:
             try:
                 modify_nvram = subprocess.call(["/usr/sbin/nvram", "-d", "fwpw-hash"])

@@ -10,6 +10,8 @@ A Python script to help Macintosh administrators manage the firmware passwords o
 * [Install](#install)
 * [Uninstall](#uninstall)
 * [Purpose](#purpose)
+  * [Why set the Firmware Password?](#why-set-the-firmware-password)
+  * [Firmware Password Manager](#firmware-password-manager)
 * [Usage](#usage)
   * [Options](#options)
   * [The keyfile](#the-keyfile)
@@ -48,11 +50,19 @@ Remove the script.
 
 ## Purpose
 
-Version 2.0 represents a complete rewrite of Firmware Password Manager (FWPM). The previous version, a shell script, always felt brittle to me. The new version is written in Python. I also focused on utilizing `firmwarepasswd`, rather than the outdated `setregproptool`.
+### Why set the Firmware Password?
+In a nutshell, the firmware password in Apple computers prevents non-privileged users from booting from a foreign device.
 
-When I began this project there wasn't a solution available for managing firmware passwords, other than the "set-it-and-forget-it" method. This approach seems error-prone and difficult to maintain beyond more than a small handful of machines. My solution centers on maintaining a single list of current and formerly used passwords that I call the keyfile. This approach allows the administrator to easily bring any number of machines up to the current password, and identify those whose firmware passwords aren't in the master list and need additional maintenance.
+The firmware password is one leg of interlocking methods used to secure Apple computers. The other two are: using strong passwords on user accounts and File Vault to apply full disk encryption (FDE). Strong account passwords are always the first line of defense. FDE effectively scrambles the information written a storage device and renders it unreadable by unauthorized persons. Using all three methods can make a computer unusable should it be lost or stolen.
+
+Depending on the model of computer, removing the firmware password can be easy or incredibly difficult, please refer to the Notes section for more information about removing the password.
+
+### Firmware Password Manager
+When I began this project there wasn't a solution available for actively managing firmware passwords, other than the "set-it-and-forget-it" method. This approach seems error-prone and difficult to maintain beyond more than a small handful of machines. My solution centers on maintaining a single list of current and formerly used passwords that I call the keyfile. This approach allows the administrator to easily bring any number of machines up to the current password, and identify those whose firmware passwords aren't in the master list and need additional maintenance.
 
 `firmware_password_manager.py` will use your keyfile to set a firmware password on a machine with no existing firmware password, attempt to change the existing firmware password to your new password or remove the current password. The script is best used when it can be installed and left on the machine for future use. This allows the admin to then create an installer package containing the keyfile and a postflight action to run FWPM. Or the admin could create a launchagent to run FWPM at every boot
+
+Version 2 represents a complete rewrite of Firmware Password Manager (FWPM). The previous version, a shell script, always felt brittle to me. The new version is written in Python. I also focused on utilizing `firmwarepasswd`, rather than the outdated `setregproptool`.
 
 
 ## Usage
