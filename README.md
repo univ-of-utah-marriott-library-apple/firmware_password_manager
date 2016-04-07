@@ -53,7 +53,7 @@ Remove the script.
 ### Why set the Firmware Password?
 In a nutshell, the firmware password in Apple computers prevents non-privileged users from booting from a foreign device.
 
-The firmware password is one leg of interlocking methods used to secure Apple computers. The other two are: using strong passwords on user accounts and FileVault to apply full disk encryption (FDE). Strong account passwords are always the first line of defense. FDE effectively scrambles the information written a storage device and renders it unreadable by unauthorized persons. Using all three methods can make a computer unusable should it be lost or stolen.
+The firmware password is one of three interlocking methods used to secure Apple computers. The other two are: using strong passwords on user accounts and FileVault to apply full disk encryption (FDE). Strong account passwords are always the first line of defense. FDE effectively scrambles the information written a storage device and renders it unreadable by unauthorized persons. Using all three methods can make a computer unusable should it be lost or stolen.
 
 Depending on the model of computer, removing the firmware password can be easy or incredibly difficult, please refer to the [Notes](#notes) section for more information about removing the password.
 
