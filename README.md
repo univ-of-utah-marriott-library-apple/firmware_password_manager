@@ -12,17 +12,20 @@ A Python script to help Macintosh administrators manage the firmware passwords o
 * [Purpose](#purpose)
   * [Why set the Firmware Password?](#why-set-the-firmware-password)
   * [Firmware Password Manager](#firmware-password-manager)
+  * [How FWPM keeps track of the current password](#how-fwpm-keeps-track-of-the-current-password)
 * [Usage](#usage)
   * [Options](#options)
   * [The keyfile](#the-keyfile)
   * [Security](#security)
   * [Example](#example)
   * [Slack integration](#slack-integration)
-  * [JAMF JSS extention attribute](#jamf-jss-extention-attribute)
   * [nvram](#nvram)
   * [firmwarepasswd](#firmwarepasswd)
   * [Error messages](#common-error-messages)
-* [New features in version 2.1](#new)
+  * [Example scripts](#example)
+   * [JAMF JSS extention attribute](#jamf-jss-extention-attribute)
+   * [Running Firmware Password Manager remotely](#remote)
+  * [New features in version 2.1](#new)
 * [Notes](#notes)
 * [Update History](#update-history)
 
@@ -64,6 +67,13 @@ When I began this project there wasn't a solution available for actively managin
 
 Version 2 represents a complete rewrite of Firmware Password Manager (FWPM). The previous version, a shell script, always felt brittle to me. The new version is written in Python. I also focused on utilizing `firmwarepasswd`, rather than the outdated `setregproptool`.
 
+### How FWPM keeps track of the current password
+
+When FWPM successfully sets or changes the firmware password it computes a hash based on the contents of the keyfile and stores the results in nvram. When FWPM is run again on a client it will compare the hash of the current keyfile and the hash stored on the machine, if they are different it will signal the need to change the firmware password to a new value.
+
+A hash can be thought of as the finger print of a file. The goal of a hash function is that no two files will share the same hash value. FWPM uses SHA-256 to generate the hash, or the SHA-2 hash function at a length of 256 bits (32 bytes). Rather than simply hashing the password itself, FWPM hashes the entire keyfile for additional security.
+
+![ScreenShot](img/hash_image.png)
 
 ## Usage
 
@@ -148,25 +158,6 @@ computername|The computername is used.
 hostname|The fully qualified domain name is used.
 serial|The machines serial number is used. If an error occurs discovering the previous methods, FWPM will fall back to this method.
 
-
-### JAMF JSS extention attribute
-
-We can leverage the nvram string and smart groups in JAMF Casper to automate the distribution of an updated keyfile package and direct clients to change their firmware passwords. We do this by defining an extension attribute (EA) in the JSS. We've included the script we run in the repository for FWPM 2.0.
-
-The EA script runs during recon and pushes the hash up to the JSS. We then define a smart group that contains any machine not sharing the same hash as the current keyfile. This makes it possible to apply a policy directing those machines to download the new keyfile package and run FWPM.
-
-The following image shows the EA page in the JSS:
-
-![ScreenShot](img/jss_ea.png)
-
-This image shows the two possible smart group built using the EA:
-
-![ScreenShot](img/jss_smart_group.png)
-
-Here is how the smart groups are built:
-
-![ScreenShot](img/jss_not_current.png)
-
 ### nvram string
 
 To make the most of FWPM, we suggest using the `--hash` flag to store the hash of the keyfile used to create the current firmware password. This allows you to use a variety of tools to remotely check the status of the firmware password on a machine. Using this flag the script will create an SHA-2 hash of the new keyfile and store it in non-volitile RAM (nvram) when the password is changed. The hash can then be accessed locally through the terminal or remotely with SSH, ARD or other tool.
@@ -214,7 +205,36 @@ I've also added a reboot flag `-b, --reboot`. If this flag is selected and the s
 
 Also new to this release is a sample script (`remotely_set_firmpwarepassword_scp_keylist.py`) showing how to remotely execute FWPM and securely copy (`scp`) your keyfile over the network. A shell script version is included for use in Apple's Remote Desktop.
 
+## Example scripts
 
+FWPM was originally written to work with our unique management system. During the python rewrite, I made an effort to make FWPM independent of any specific administration philosophy and making it easier to integrate into future management solutions. I've included sample scripts for integrating FWPM into JAMF Casper, UNIX and ARD. The source is included in the example scripts folder.
+
+
+### JAMF JSS extention attribute
+
+We can leverage the nvram string and smart groups in JAMF Casper to automate the distribution of an updated keyfile package and direct clients to change their firmware passwords. We do this by defining an extension attribute (EA) in the JSS. We've included the script we run in the repository for FWPM 2.0.
+
+The EA script runs during recon and pushes the hash up to the JSS. We then define a smart group that contains any machine not sharing the same hash as the current keyfile. This makes it possible to apply a policy directing those machines to download the new keyfile package and run FWPM.
+
+The following image shows the EA page in the JSS:
+
+![ScreenShot](img/jss_ea.png)
+
+This image shows the two possible smart group built using the EA:
+
+![ScreenShot](img/jss_smart_group.png)
+
+Here is how the smart groups are built:
+
+![ScreenShot](img/jss_not_current.png)
+
+### Running Firmware Password Manager remotely
+
+The awkwardly titled remotely_set_firmpwarepassword_scp_keylist.py script uses OpenSSH's Secure Copy command to copy the keyfile and execute FWPM.
+
+The equally awkward ard_wrapped_remotely_set_firmpwarepassword_scp_keylist.sh script is written to use in an Apple Remote Desktop Send UNIX command.
+
+These examples are designed to be customized with the server address, account name and password to allow scp to function. Care will be required to prevent unauthorized users from examining the contents.
 
 ## Notes
 If you have forgotten the firmware password for a machine your available options depend upon the age of the machine.
