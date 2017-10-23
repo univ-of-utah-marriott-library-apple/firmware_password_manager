@@ -1,4 +1,7 @@
 #!/usr/bin/python
+"""
+A Python script to help Macintosh administrators manage the firmware passwords of their computers.
+"""
 
 # Copyright (c) 2016 University of Utah Student Computing Labs. ################
 # All Rights Reserved.
@@ -32,6 +35,9 @@
 #    2.1.2  2016.03.16      cleaned up argparse. tjm
 #
 #    2.1.3  2016.04.04      remove obsolete flag logic. tjm
+#
+#    2.1.4  2017.10.23      using rm -P for secure delete,
+#                           added additional alerting, additional pylint cleanup. tjm
 #
 #
 # keyfile format:
@@ -81,21 +87,22 @@
 
 #
 # imports
-from management_tools import loggers
-from management_tools.slack import IncomingWebhooksSender as IWS
-from sys import exit
+# from sys import exit
 import argparse
 import os
-import pexpect
 import re
 import socket
 import subprocess
 import plistlib
 import base64
+import pexpect
+from management_tools import loggers
+from management_tools.slack import IncomingWebhooksSender as IWS
+
 
 #
 # functions
-def secure_delete_keyfile(logger, args):
+def secure_delete_keyfile(logger, args, error_bot, local_identifier):
     """
     attempts to securely delete the keyfile with medium overwrite and zeroing settings
     """
@@ -105,7 +112,8 @@ def secure_delete_keyfile(logger, args):
         logger.info("Test mode, keyfile not deleted.")
         return
     try:
-        deleted_keyfile = subprocess.call(["/usr/bin/srm", "-mz", args.keyfile])
+        deleted_keyfile = subprocess.call(["/bin/rm", "-Pf", args.keyfile])
+        logger.info("keyfile deleted successfuly.")
     except:
         logger.critical("Issue with attempt to remove keyfile.")
 
@@ -113,11 +121,17 @@ def secure_delete_keyfile(logger, args):
 # is this really needed?
     if os.path.exists(args.keyfile):
         logger.critical("Failure to remove keyfile.")
+        if args.slack:
+            error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "An error occured. Failed to remove keyfile.")
     else:
         logger.info("Keyfile removed.")
     return
 
+
 def main():
+    """
+    Master Control Function.
+    """
 
     #
     # require root to run.
@@ -132,39 +146,43 @@ def main():
     #
     # required, mutually exclusive commands
     prime_group = parser.add_argument_group('Required management settings',
-        'Choosing one of these options is required to run FWPM. They tell FWPM how you \
-        want to manage the firmware password.')
+                                            'Choosing one of these options is required \
+                                            to run FWPM. They tell FWPM how you \
+                                            want to manage the firmware password.')
     subprime = prime_group.add_mutually_exclusive_group(required=True)
     subprime.add_argument('-r', '--remove', action="store_true",
-        default=False, help='Remove the firmware password')
+                          default=False, help='Remove the firmware password')
     subprime.add_argument('-m', '--management', default=None,
-        help='Set a custom nvram management string')
+                          help='Set a custom nvram management string')
     subprime.add_argument('-#', '--hash', action="store_true", default=False,
-        help='Set nvram string to hash of keyfile')
+                          help='Set nvram string to hash of keyfile')
     subprime.add_argument('-n', '--nostring', action="store_true", default=False,
-        help='Do not set an nvram management string')
+                          help='Do not set an nvram management string')
 
     keyfile_group = parser.add_argument_group('Keyfile options', 'The keyfile is \
-        required to use FWPM. These options allow you to set the location and \
-        format of the keyfile.')
+                                               required to use FWPM. These options \
+                                               allow you to set the location and \
+                                               format of the keyfile.')
     keyfile_group.add_argument('-k', '--keyfile', help='Set the path to your keyfile',
-         required=True)
+                               required=True)
     keyfile_group.add_argument('-o', '--obfuscated', action="store_true", default=False,
-        help='Tell FWPM your keylist is an obfuscated plist.')
+                               help='Tell FWPM your keylist is an obfuscated plist.')
 
     slack_group = parser.add_argument_group('Slack integration',
-        'FWPM allows you to send informational and error messages to your Slack team. \
-        Additionally you can select different methods of identifiying clients.')
+                                            'FWPM allows you to send informational \
+                                            and error messages to your Slack team. \
+                                            Additionally you can select different \
+                                            methods of identifiying clients.')
     slack_group.add_argument('-s', '--slack', action="store_true",
-        default=False, help='Send important messages to Slack.')
+                             default=False, help='Send important messages to Slack.')
     slack_group.add_argument('-i', '--identifier', default=None,
-        choices=['IP', 'hostname', 'MAC', 'computername', 'serial'],
-            required=False, help='Set slack identifier.')
+                             choices=['IP', 'hostname', 'MAC', 'computername', 'serial'],
+                             required=False, help='Set slack identifier.')
 
     parser.add_argument('-b', '--reboot', action="store_true", default=False,
-        help='Reboots the computer after the script completes successfully.')
+                        help='Reboots the computer after the script completes successfully.')
     parser.add_argument('-t', '--testmode', action="store_true", default=False,
-        help='Test mode. Verbose logging, will not delete keyfile.')
+                        help='Test mode. Verbose logging, will not delete keyfile.')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s 2.1.3')
 
     args = parser.parse_args()
@@ -180,17 +198,17 @@ def main():
     #
     # set up slack channel(s)
     if args.slack:
-        slack_info_url      = 'your slack URL'
-        slack_info_channel  = '#your FWPM info channel'
-        info_bot            = IWS(slack_info_url, bot_name="FWPM informational message", channel=slack_info_channel)
+        slack_info_url = 'your slack URL'
+        slack_info_channel = '#your FWPM info channel'
+        info_bot = IWS(slack_info_url, bot_name="FWPM informational message", channel=slack_info_channel)
 
-        slack_error_url     = 'your slack URL'
+        slack_error_url = 'your slack URL'
         slack_error_channel = '#your FWPM error channel'
-        error_bot           = IWS(slack_error_url, bot_name="FWPM error message", channel=slack_error_channel)
+        error_bot = IWS(slack_error_url, bot_name="FWPM error message", channel=slack_error_channel)
 
-        full_ioreg        = subprocess.check_output(['ioreg', '-l'])
-        serial_number_raw = re.findall('\"IOPlatformSerialNumber\" = \"(.*)\"', full_ioreg)
-        serial_number     = serial_number_raw[0]
+        full_ioreg = subprocess.check_output(['ioreg', '-l'])
+        serial_number_raw = re.findall(r'\"IOPlatformSerialNumber\" = \"(.*)\"', full_ioreg)
+        serial_number = serial_number_raw[0]
         if args.testmode:
             print "Serial number: %r" % serial_number
 
@@ -199,19 +217,19 @@ def main():
 
             # Get ordered list of network devices
             base_network_list = subprocess.check_output(["/usr/sbin/networksetup", "-listnetworkserviceorder"])
-            network_device_list = re.findall('\) (.*)\n\(.*Device: (.*)\)', base_network_list)
+            network_device_list = re.findall(r'\) (.*)\n\(.*Device: (.*)\)', base_network_list)
             for device in network_device_list:
                 device_name = device[0]
                 port_name = device[1]
                 try:
                     device_info_raw = subprocess.check_output(["/sbin/ifconfig", port_name])
-                    mac_address = re.findall('ether (.*) \n', device_info_raw)
+                    mac_address = re.findall(r'ether (.*) \n', device_info_raw)
                     if args.testmode:
                         print "%r" % mac_address
-                    ether_address = re.findall('inet (.*) netmask', device_info_raw)
+                    ether_address = re.findall(r'inet (.*) netmask', device_info_raw)
                     if args.testmode:
                         print "%r" % ether_address
-                    processed_device_list.append([ device_name, port_name, ether_address[0], mac_address[0] ])
+                    processed_device_list.append([device_name, port_name, ether_address[0], mac_address[0]])
                 except:
                     pass
 
@@ -223,7 +241,7 @@ def main():
                     local_identifier = processed_device_list[0][2] + " (" + processed_device_list[0][0] + ":" + processed_device_list[0][1] + ")"
 
                 if args.identifier == 'MAC':
-                    local_identifier = processed_device_list[0][3]  + " (" + processed_device_list[0][0] + ":" + processed_device_list[0][1] + ")"
+                    local_identifier = processed_device_list[0][3] + " (" + processed_device_list[0][0] + ":" + processed_device_list[0][1] + ")"
 
                 if args.identifier == 'hostname':
                     try:
@@ -240,13 +258,13 @@ def main():
             try:
                 cname_identifier_raw = subprocess.check_output(['/usr/sbin/scutil', '--get', 'ComputerName'])
                 local_identifier = cname_identifier_raw.split('\n')[0]
-                logger.info("Computername: %r" % local_identifier)
+                logger.info("Computername: " + local_identifier)
             except:
                 logger.info("error discovering computername.")
                 local_identifier = serial_number
         elif args.identifier == 'serial':
             local_identifier = serial_number
-            logger.info("Serial number: %r" % local_identifier)
+            logger.info("Serial number: " + local_identifier)
         else:
             logger.info("bad or no identifier flag, defaulting to serial number.")
             local_identifier = serial_number
@@ -259,9 +277,9 @@ def main():
     path_to_keyfile_exists = os.path.exists(args.keyfile)
 
     if not path_to_keyfile_exists:
-        logger.critical("%s does not exist. Exiting." % args.keyfile)
+        logger.critical(args.keyfile + " does not exist. Exiting.")
         if args.slack:
-            error_bot.send_message("_*"+local_identifier + "*_ :no_entry_sign:\n" + "Keyfile does not exist.")
+            error_bot.send_message("_*" + local_identifier + "*_ :no_entry_sign:\n" + "Keyfile does not exist.")
         exit(2)
 
     #
@@ -270,8 +288,8 @@ def main():
     if args.management:
         fwpw_managed_string = args.management
     elif args.hash:
-        incoming_hash       = subprocess.check_output(["/usr/bin/openssl", "dgst", "-sha256", args.keyfile])
-        incoming_hash       = incoming_hash.rstrip('\r\n')
+        incoming_hash = subprocess.check_output(["/usr/bin/openssl", "dgst", "-sha256", args.keyfile])
+        incoming_hash = incoming_hash.rstrip('\r\n')
         fwpw_managed_string = incoming_hash.split(" ")[1]
         # prepend '2:' to denote hash created with v2 of script, will force a password change from v1
         fwpw_managed_string = '2:' + fwpw_managed_string
@@ -280,7 +298,6 @@ def main():
 
     if args.testmode:
         print "Incoming hash: %s" % fwpw_managed_string
-
 
     #
     # compare incoming hash with current nvram hash
@@ -295,15 +312,15 @@ def main():
             if args.testmode:
                 print "Existing hash: %s" % existing_keyfile_hash
 
-        except Exception as this_Exception:
-            logger.warning("nvram failed on %r (value probably doesn't exist)." % this_Exception)
+        except Exception as this_exception:
+            logger.warning("nvram failed on " + this_exception + " (value probably doesn't exist).")
 
         if existing_keyfile_hash == fwpw_managed_string:
             if args.hash:
                 logger.info("Hashes match. Exiting.")
                 if args.slack:
-                    info_bot.send_message("_*"+local_identifier + "*_ :white_check_mark:\n" + "Hashes match. No Change.")
-                secure_delete_keyfile(logger, args)
+                    info_bot.send_message("_*" + local_identifier + "*_ :white_check_mark:\n" + "Hashes match. No Change.")
+                secure_delete_keyfile(logger, args, error_bot, local_identifier)
                 if args.reboot:
                     logger.info("Reboot not required, canceling.")
                 # return a value?
@@ -318,9 +335,9 @@ def main():
 
     if not new_fw_tool_exists:
         logger.critical("No Firmware password tool available. Exiting.")
-        secure_delete_keyfile(logger, args)
+        secure_delete_keyfile(logger, args, error_bot, local_identifier)
         if args.slack:
-            error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "No Firmware password tool available.")
+            error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "No Firmware password tool available.")
         exit(1)
 
     #
@@ -328,13 +345,13 @@ def main():
     logger.info("Checking for existing firmware password")
 
     existing_fw_pw = subprocess.check_output([new_fw_tool_path, "-check"])
-    logger.info("New tools says %r " % existing_fw_pw)
+    logger.info("New tools says " + existing_fw_pw)
     if 'No' in existing_fw_pw:
         if args.remove:
             logger.critical("Asked to delete, no password set. Exiting.")
-            secure_delete_keyfile(logger, args)
+            secure_delete_keyfile(logger, args, error_bot, local_identifier)
             if args.slack:
-                error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Asked to Delete, no password set.")
+                error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Asked to Delete, no password set.")
             try:
                 modify_nvram = subprocess.call(["/usr/sbin/nvram", "-d", "fwpw-hash"])
                 logger.info("nvram entry pruned.")
@@ -349,11 +366,10 @@ def main():
         existing_password = True
     else:
         logger.critical("Firmwarepasswd bad response at -check. Exiting.")
-        secure_delete_keyfile(logger, args)
+        secure_delete_keyfile(logger, args, error_bot, local_identifier)
         if args.slack:
-            error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Firmwarepasswd bad response at -check.")
+            error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Firmwarepasswd bad response at -check.")
         exit(1)
-
 
     logger.info("Reading password file")
 
@@ -363,20 +379,20 @@ def main():
         logger.info("Reading plist")
         passwords = []
         try:
-            pl = plistlib.readPlist(args.keyfile)
+            input_plist = plistlib.readPlist(args.keyfile)
         except:
             logger.critical("Error reading plist. Exiting.")
             if args.slack:
-                error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Error reading plist.")
+                error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Error reading plist.")
             exit(1)
-        content_raw = pl["data"]
+        content_raw = input_plist["data"]
 
         content_raw = base64.b64decode(content_raw)
         content_raw = content_raw.split(",")
         content_raw = [x for x in content_raw if x]
 
-        for x in content_raw:
-            label, pword = x.split(':')
+        for item in content_raw:
+            label, pword = item.split(':')
             pword = base64.b64decode(pword)
             try:
                 commented = label.split('#')[1]
@@ -402,7 +418,7 @@ def main():
         except:
             logger.critical("Error reading keyfile. Exiting.")
             if args.slack:
-                error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Error reading keyfile.")
+                error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Error reading keyfile.")
             exit(1)
 
         logger.info("Closed password file")
@@ -415,22 +431,22 @@ def main():
     for entry in passwords:
         try:
             key, value = entry.split(":", 1)
-        except Exception as this_Exception:
-            logger.critical("Malformed keyfile, key:value format required. %r. Quitting." % this_Exception)
-            secure_delete_keyfile(logger, args)
+        except Exception as this_exception:
+            logger.critical("Malformed keyfile, key:value format required. " + this_exception + ". Quitting.")
+            secure_delete_keyfile(logger, args, error_bot, local_identifier)
             if args.slack:
-                error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Malformed keyfile.")
+                error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Malformed keyfile.")
             exit(1)
 
         if args.testmode:
-            logger.info('%s:%s' % (key, value))
+            logger.info(key + ":" + value)
 
         if key.lower() == 'new':
             if new_password is not None:
                 logger.critical("Malformed keyfile, multiple new keys. Quitting.")
-                secure_delete_keyfile(logger, args)
+                secure_delete_keyfile(logger, args, error_bot, local_identifier)
                 if args.slack:
-                    error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Malformed keyfile.")
+                    error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Malformed keyfile.")
                 exit(1)
             else:
                 new_password = value
@@ -441,11 +457,11 @@ def main():
     logger.info("Sanity checking password file contents")
 
     if new_password is None and not args.remove:
-            logger.critical("Malformed keyfile, no \'new\' key. Quitting.")
-            secure_delete_keyfile(logger, args)
-            if args.slack:
-                error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Malformed keyfile.")
-            exit(1)
+        logger.critical("Malformed keyfile, no \'new\' key. Quitting.")
+        secure_delete_keyfile(logger, args, error_bot, local_identifier)
+        if args.slack:
+            error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Malformed keyfile.")
+        exit(1)
 
     exit_normal = False
     known_current_password = False
@@ -457,17 +473,17 @@ def main():
         new_fw_tool_cmd = [new_fw_tool_path, '-verify']
         logger.info(' '.join(new_fw_tool_cmd))
 
-        for index in reversed(xrange(len(other_password_list))):
+        for keyfile_index in reversed(xrange(len(other_password_list))):
             child = pexpect.spawn(' '.join(new_fw_tool_cmd))
             child.expect('Enter password:')
 
-            child.sendline(other_password_list[index])
+            child.sendline(other_password_list[keyfile_index])
             result = child.expect(['Correct', 'Incorrect'])
 
             if result == 0:
                 #
                 # correct password, exit loop
-                current_password = other_password_list[index]
+                current_password = other_password_list[keyfile_index]
                 known_current_password = True
                 break
             else:
@@ -496,13 +512,13 @@ def main():
                 if result == 0:
                     #
                     # password accepted, log result and exit
-                    logger.info("Finished. Password should be removed. Restart required. [%i]" % (index + 1))
+                    logger.info("Finished. Password should be removed. Restart required. [" + (keyfile_index + 1) + "]")
                     exit_normal = True
                 else:
                     logger.critical("Asked to delete, current password not accepted. Exiting.")
-                    secure_delete_keyfile(logger, args)
+                    secure_delete_keyfile(logger, args, error_bot, local_identifier)
                     if args.slack:
-                        error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Asked to delete, current password not accepted.")
+                        error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Asked to delete, current password not accepted.")
                     exit(1)
 
             #
@@ -526,9 +542,9 @@ def main():
                     pass
                 else:
                     logger.error("bad response from firmwarepasswd. Exiting.")
-                    secure_delete_keyfile(logger, args)
+                    secure_delete_keyfile(logger, args, error_bot, local_identifier)
                     if args.slack:
-                        error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Bad response from firmwarepasswd.")
+                        error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Bad response from firmwarepasswd.")
                     exit(1)
                 child.sendline(current_password)
 
@@ -537,9 +553,9 @@ def main():
                     pass
                 else:
                     logger.error("bad response from firmwarepasswd. Exiting.")
-                    secure_delete_keyfile(logger, args)
+                    secure_delete_keyfile(logger, args, error_bot, local_identifier)
                     if args.slack:
-                        error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Bad response from firmwarepasswd.")
+                        error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Bad response from firmwarepasswd.")
                     exit(1)
                 child.sendline(new_password)
 
@@ -548,9 +564,9 @@ def main():
                     pass
                 else:
                     logger.error("bad response from firmwarepasswd. Exiting.")
-                    secure_delete_keyfile(logger, args)
+                    secure_delete_keyfile(logger, args, error_bot, local_identifier)
                     if args.slack:
-                        error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Bad response from firmwarepasswd.")
+                        error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Bad response from firmwarepasswd.")
                     exit(1)
                 child.sendline(new_password)
 
@@ -564,9 +580,9 @@ def main():
         # Unable to match current password with contents of keyfile
         else:
             logger.critical("Current FW password not in keyfile. Quitting.")
-            secure_delete_keyfile(logger, args)
+            secure_delete_keyfile(logger, args, error_bot, local_identifier)
             if args.slack:
-                error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Current FW password not in keyfile.")
+                error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Current FW password not in keyfile.")
             exit(1)
 
     #
@@ -583,9 +599,9 @@ def main():
             pass
         else:
             logger.error("bad response from firmwarepasswd. Exiting.")
-            secure_delete_keyfile(logger, args)
+            secure_delete_keyfile(logger, args, error_bot, local_identifier)
             if args.slack:
-                error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Bad response from firmwarepasswd.")
+                error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Bad response from firmwarepasswd.")
             exit(1)
         child.sendline(new_password)
 
@@ -594,9 +610,9 @@ def main():
             pass
         else:
             logger.error("bad response from firmwarepasswd. Exiting.")
-            secure_delete_keyfile(logger, args)
+            secure_delete_keyfile(logger, args, error_bot, local_identifier)
             if args.slack:
-                error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "Bad response from firmwarepasswd.")
+                error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "Bad response from firmwarepasswd.")
             exit(1)
         child.sendline(new_password)
 
@@ -608,12 +624,11 @@ def main():
 
     #
     # Delete keyfile securely.
-    secure_delete_keyfile(logger, args)
+    secure_delete_keyfile(logger, args, error_bot, local_identifier)
 
     #
     # closing reports
     logger.info("Closing out.")
-
 
     #
     # No errors detected during run.
@@ -624,7 +639,7 @@ def main():
                 modify_nvram = subprocess.call(["/usr/sbin/nvram", "-d", "fwpw-hash"])
                 logger.info("nvram entry pruned.")
                 if args.slack:
-                    info_bot.send_message("_*"+local_identifier + "*_ :unlock:\n" + "FWPW removed.")
+                    info_bot.send_message("_*" + local_identifier + "*_ :unlock:\n" + "FWPW removed.")
             except:
                 logger.warning("nvram reported error attempting to remove hash. Hash may not have existed.")
                 exit(1)
@@ -636,7 +651,7 @@ def main():
                     modify_nvram = subprocess.call(["/usr/sbin/nvram", "-d", "fwpw-hash"])
                     logger.info("nvram entry pruned.")
                     if args.slack:
-                        info_bot.send_message("_*"+local_identifier + "*_ :closed_lock_with_key:\n" + "FWPW updated.")
+                        info_bot.send_message("_*" + local_identifier + "*_ :closed_lock_with_key:\n" + "FWPW updated.")
                 except:
                     logger.warning("nvram reported error attempting to remove hash. Exiting.")
                     exit(1)
@@ -644,14 +659,14 @@ def main():
                 # assuming hash doesn't exist.
                 logger.info("Assuming nvram entry doesn't exist.")
                 if args.slack:
-                    info_bot.send_message("_*"+local_identifier + "*_ :closed_lock_with_key:\n" + "FWPW updated.")
+                    info_bot.send_message("_*" + local_identifier + "*_ :closed_lock_with_key:\n" + "FWPW updated.")
 
         if args.management or args.hash:
             try:
                 modify_nvram = subprocess.call(["/usr/sbin/nvram", "fwpw-hash="+fwpw_managed_string])
                 logger.info("nvram modified.")
                 if args.slack:
-                    info_bot.send_message("_*"+local_identifier + "*_ :closed_lock_with_key:\n" + "FWPW updated.")
+                    info_bot.send_message("_*" + local_identifier + "*_ :closed_lock_with_key:\n" + "FWPW updated.")
             except:
                 logger.warning("nvram modification failed. nvram reported error.")
                 exit(1)
@@ -667,8 +682,9 @@ def main():
     else:
         logger.critical("An error occured. Failed to modify firmware password.")
         if args.slack:
-            error_bot.send_message("_*"+local_identifier + "*_ :no_entry:\n" + "An error occured. Failed to modify firmware password.")
+            error_bot.send_message("_*" + local_identifier + "*_ :no_entry:\n" + "An error occured. Failed to modify firmware password.")
         exit(1)
+
 
 if __name__ == '__main__':
     main()
