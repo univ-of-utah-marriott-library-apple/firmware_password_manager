@@ -197,15 +197,17 @@ def main():
 
     #
     # set up slack channel(s)
+    slack_info_url = 'your FWPM slack info URL'
+    slack_info_channel = '#your FWPM slack info channel'
+    info_bot = IWS(slack_info_url, bot_name="FWPM informational message", channel=slack_info_channel)
+
+    slack_error_url = 'your FWPM slack error URL'
+    slack_error_channel = '#your FWPM slack error channel'
+    error_bot = IWS(slack_error_url, bot_name="FWPM error message", channel=slack_error_channel)
+
+    local_identifier = None
+
     if args.slack:
-        slack_info_url = 'your slack URL'
-        slack_info_channel = '#your FWPM info channel'
-        info_bot = IWS(slack_info_url, bot_name="FWPM informational message", channel=slack_info_channel)
-
-        slack_error_url = 'your slack URL'
-        slack_error_channel = '#your FWPM error channel'
-        error_bot = IWS(slack_error_url, bot_name="FWPM error message", channel=slack_error_channel)
-
         full_ioreg = subprocess.check_output(['ioreg', '-l'])
         serial_number_raw = re.findall(r'\"IOPlatformSerialNumber\" = \"(.*)\"', full_ioreg)
         serial_number = serial_number_raw[0]
