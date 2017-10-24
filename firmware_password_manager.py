@@ -183,7 +183,7 @@ def main():
                         help='Reboots the computer after the script completes successfully.')
     parser.add_argument('-t', '--testmode', action="store_true", default=False,
                         help='Test mode. Verbose logging, will not delete keyfile.')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s 2.1.3')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s 2.1.4')
 
     args = parser.parse_args()
 
