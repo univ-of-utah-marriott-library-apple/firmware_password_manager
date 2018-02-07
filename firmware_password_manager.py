@@ -315,7 +315,7 @@ def main():
                 print "Existing hash: %s" % existing_keyfile_hash
 
         except Exception as this_exception:
-            logger.warning("nvram failed on " + this_exception + " (value probably doesn't exist).")
+            logger.warning("nvram failed with " + str(this_exception) + " (fwpw probably not set).")
 
         if existing_keyfile_hash == fwpw_managed_string:
             if args.hash:
