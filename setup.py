@@ -2,9 +2,9 @@ from distutils.core import setup
 
 setup(
     name='Firmware Password Manager',
-    version='2.1.4',
+    version='2.1.5',
     url='https://github.com/univ-of-utah-marriott-library-apple/firmware_password_manager',
-    author='Todd McDaniel, Marriott Library IT Services',
+    author='Todd McDaniel, Marriott Library Client Platform Services',
     author_email='mlib-its-mac-github@lists.utah.edu',
     description=('A Python script to help Macintosh administrators manage the firmware ',
                  'passwords of their computers.'),

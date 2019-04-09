@@ -3,8 +3,8 @@
 A Python script to help Macintosh administrators manage the firmware passwords of their computers.
 """
 
-# Copyright (c) 2016 University of Utah Student Computing Labs. ################
-# All Rights Reserved.
+# Copyright (c) 2019 University of Utah, Marriott Library, #####################
+# Client Platform Services. All Rights Reserved.
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby granted,
@@ -38,6 +38,8 @@ A Python script to help Macintosh administrators manage the firmware passwords o
 #
 #    2.1.4  2017.10.23      using rm -P for secure delete,
 #                           added additional alerting, additional pylint cleanup. tjm
+#
+#    2.1.5  2019.04.23      Corrected issue reporting no existing firmware password. tjm
 #
 #
 # keyfile format:
@@ -183,7 +185,7 @@ def main():
                         help='Reboots the computer after the script completes successfully.')
     parser.add_argument('-t', '--testmode', action="store_true", default=False,
                         help='Test mode. Verbose logging, will not delete keyfile.')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s 2.1.4')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s 2.1.5')
 
     args = parser.parse_args()
 

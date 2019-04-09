@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Copyright (c) 2016 University of Utah Student Computing Labs. ################
-# All Rights Reserved.
+# Copyright (c) 2019 University of Utah, Marriott Library, #####################
+# Client Platform Services. All Rights Reserved.
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby granted,
