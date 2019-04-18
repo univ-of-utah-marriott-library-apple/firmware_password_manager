@@ -239,10 +239,17 @@ These examples are designed to be customized with the server address, account na
 ## Notes
 If you have forgotten the firmware password for a machine your available options depend upon the age of the machine.
 
-If the machine is a MacBook Air (Late 2010) and later, MacBook Pro (Early 2011) and later, iMac (Mid 2011) and later, and Mac mini (Mid 2011) you will need to contact Apple. Please see these pages for additional info:
+Only Apple Retail Stores or Apple Authorized Service Providers can unlock the following Mac models when protected by a firmware password:
 
-https://jamfnation.jamfsoftware.com/discussion.html?id=5474
-http://www.ernieflores.net/osx-page-5/recovering-a-lost-firmware-password/
+ 	• iMac (Mid 2011 and later)
+ 	• iMac Pro (2017)
+ 	• MacBook (Retina, 12-inch, Early 2015 and later)
+ 	• MacBook Air (Late 2010 and later)
+	• MacBook Pro (Early 2011 and later)
+	• Mac mini (Mid 2011 and later)
+ 	• Mac Pro (Late 2013)
+
+If you can't remember your firmware password or passcode, schedule an in-person service appointment with an Apple Store or Apple Authorized Service Provider. Bring your Mac to the appointment, and bring your original receipt or invoice as proof of purchase.
 
 If you have an earlier machine, it's much easier:
 
