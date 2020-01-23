@@ -1,3 +1,0 @@
-comment:previousPasswd
-#new:considered_an_old_password
-new:everything0ld1sNewAgain
