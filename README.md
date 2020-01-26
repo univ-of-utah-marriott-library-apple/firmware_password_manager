@@ -17,7 +17,7 @@ A Python script to help Macintosh administrators manage the firmware passwords o
   * [How FWPM keeps track of the current password](#how-fwpm-keeps-track-of-the-current-password)
 * [Usage](#usage)
   * [Options](#options)
-  * [The configuration file](#)
+  * [The configuration file](#the-configuration-file)
     * [Flags](#flags)
     * [Keyfile](#keyfile)
     * [Logging](#logging)
@@ -45,7 +45,7 @@ A Python script to help Macintosh administrators manage the firmware passwords o
          * [Keyfile Hash](#keyfile-hash)
          * [Status Messages](#status-messages)
       * [Rebuilding the binary](#rebuilding-the-binary)
-   * [Notes](#notes)
+* [Notes](#notes)
 * [Update History](#update-history)
 
 ## Download
@@ -60,7 +60,7 @@ If you have any comments, questions, or other input, either [file an issue](../.
 
 * Python 3.7+ (which you can download [here](https://www.python.org/download/))
 * Pexpect 3.3+ (which you can download [here](https://github.com/pexpect/pexpect))
-* Pyinstaller (which you can download [here](https://www.pyinstaller.org/))
+* Pyinstaller (which you can download [here](https://www.pyinstaller.org/)) *Only needed if you wish to rebuild either binary.*
 
 ## Install
 
@@ -97,7 +97,7 @@ A hash can be thought of as the finger print of a file. The goal of a hash funct
 ## Usage
 
 ```
-firmware_password_manager.py [-h -v] [-c /path/to/configfile]
+firmware_password_manager [-h -v] [-c /path/to/configfile]
 ```
 
 
@@ -155,8 +155,8 @@ The configuration file is broken up into sections roughly approximating the comm
 Name | Type|Purpose
 --------|---------|---------
 use_firmwarepassword|Boolean|Turn FW password on or off.
-management_string_type|String|Select the type of management string to use. If blank, keyfile has will be used.
-custom_string|String|If you elect to use a custom string, enter it here.
+management_string_type|String|Select the type of management string to use: hash or custom_string. Hash will be used if no value is present. custom_string will use the value in the following variable.
+custom_string|String|If you elect to use custom_string, enter it here.
 use_reboot_on_exit|Boolean|If you want FWPM to force an immediate reboot on success.
 
 
@@ -438,7 +438,7 @@ Thank you to macmule for <http://macmule.com/2014/05/11/ea-check-efi-password-st
 
 Date | Version | Notes
 -------|-----------|-------
-2020.01.07 | 2.5 | Removed flags, uses configuration file, removed management_tools, ported to python3. Added Skeleton Key and JAMF Controller script.
+2020.01.23 | 2.5 | Removed flags, uses configuration file, removed management_tools, ported to python3. Added Skeleton Key and JAMF Controller script.
 2019.10.23 | 2.1.5 | Corrected issue reporting no existing firmware password.
 2017.10.23 | 2.1.4 | Using rm -P for secure delete, added additional alerting, additional pylint cleanup.
 2016.03.16 | 2.1.2 | Cleaned up argparse, removed obsolete flag logic.
