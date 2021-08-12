@@ -116,14 +116,14 @@ Here is the default configuration file included with FWPM:
 
 ```
 [flags]
-use_firmwarepassword: yes
+use_fwpw: true
 management_string_type: hash
 custom_string:
 use_reboot_on_exit:
 
 [keyfile]
 path: /YourVolume/this/location/example_keyfile.txt
-use_obfuscation: No
+use_obfuscation: false
 remote_type: smb
 server_path: server_path
 username: user_name
@@ -154,7 +154,7 @@ The configuration file is broken up into sections roughly approximating the comm
 
 Name | Type|Purpose
 --------|---------|---------
-use_firmwarepassword|Boolean|Turn FW password on or off.
+use_fwpw|Boolean|Turn FW password on or off.
 management_string_type|String|Select the type of management string to use: hash or custom_string. Hash will be used if no value is present. custom_string will use the value in the following variable.
 custom_string|String|If you elect to use custom_string, enter it here.
 use_reboot_on_exit|Boolean|If you want FWPM to force an immediate reboot on success.
